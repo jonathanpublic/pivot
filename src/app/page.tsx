@@ -1,7 +1,8 @@
 "use client"
 import { useState } from 'react';
 import MapInstance from "@/components/Map"
-
+import Dashboard from '@/components/Dashboard';
+import SettingsMenu from "@/components/Settings"
 import Link from 'next/link';
 import {
   Bell,
@@ -14,7 +15,8 @@ import {
   Search,
   ShoppingCart,
   Users,
-  Map
+  Map,
+  Settings
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -36,23 +38,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
-const DashboardContent = () => (
-  <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-    <div className="flex items-center">
-      <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
-    </div>
-    {/* Placeholder content for Dashboard */}
-  </main>
-);
-
-const OrdersContent = () => (
-  <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-    <div className="flex items-center">
-      <h1 className="text-lg font-semibold md:text-2xl">Orders</h1>
-    </div>
-    {/* Placeholder content for Orders */}
-  </main>
-);
 
 const ProductsContent = () => (
   <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
@@ -81,19 +66,19 @@ const AnalyticsContent = () => (
   </main>
 );
 
-export default function Dashboard() {
+export default function Main() {
   const [selectedContent, setSelectedContent] = useState('dashboard'); // Initial state for Dashboard
 
   const renderContent = () => {
     switch (selectedContent) {
       case 'dashboard':
-        return <DashboardContent />;
-      case 'orders':
-        return <OrdersContent />;
+        return <Dashboard />;
+      case 'map':
+        return <MapInstance />;
       case 'products':
         return <ProductsContent />;
-      case 'customers':
-        return <CustomersContent />;
+      case 'settings':
+        return <SettingsMenu />;
       case 'analytics':
         return <AnalyticsContent />;
       default:
@@ -108,7 +93,7 @@ export default function Dashboard() {
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Package2 className="h-6 w-6" />
-              <span className="">Acme Inc</span>
+              <span className="">Pivot Inc</span>
             </Link>
             <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
               <Bell className="h-4 w-4" />
@@ -127,29 +112,19 @@ export default function Dashboard() {
               </Link>
               <Link
                 href="#"
-                onClick={() => setSelectedContent('orders')}
+                onClick={() => setSelectedContent('map')}
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
               >
-                <ShoppingCart className="h-4 w-4" />
-                Orders
-                <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                  6
-                </Badge>
+                <Map className="h-4 w-4" />
+                Map
               </Link>
               <Link
                 href="#"
                 onClick={() => setSelectedContent('ProductsContent')}
-                className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
-              >
-                <Package className="h-4 w-4" />
-                Products{" "}
-              </Link>
-              <Link
-                href="#"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
               >
-                <Users className="h-4 w-4" />
-                Customers
+                <Package className="h-4 w-4" />
+                Jobs
               </Link>
               <Link
                 href="#"
@@ -157,6 +132,14 @@ export default function Dashboard() {
               >
                 <LineChart className="h-4 w-4" />
                 Analytics
+              </Link>
+              <Link
+                href="#"
+                onClick={() => setSelectedContent('settings')}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+              >
+                <Settings className="h-4 w-4"/>
+                Settings
               </Link>
             </nav>
           </div>
@@ -198,10 +181,11 @@ export default function Dashboard() {
                   className="flex items-center gap-2 text-lg font-semibold"
                 >
                   <Package2 className="h-6 w-6" />
-                  <span className="sr-only">Acme Inc</span>
+                  <span className="sr-only">Pivot Inc</span>
                 </Link>
                 <Link
                   href="#"
+                  onClick={() => setSelectedContent('dashboard')}
                   className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
                 >
                   <Home className="h-5 w-5" />
@@ -209,27 +193,19 @@ export default function Dashboard() {
                 </Link>
                 <Link
                   href="#"
+                  onClick={() => setSelectedContent('map')}
                   className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
                 >
-                  <ShoppingCart className="h-5 w-5" />
-                  Orders
-                  <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                    6
-                  </Badge>
+                  <Map className="h-5 w-5" />
+                  Map
                 </Link>
                 <Link
                   href="#"
+                  onClick={() => setSelectedContent('dashboard')}
                   className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
                 >
                   <Package className="h-5 w-5" />
-                  Products
-                </Link>
-                <Link
-                  href="#"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Users className="h-5 w-5" />
-                  Customers
+                  Jobs
                 </Link>
                 <Link
                   href="#"
@@ -237,6 +213,14 @@ export default function Dashboard() {
                 >
                   <LineChart className="h-5 w-5" />
                   Analytics
+                </Link>
+                <Link
+                  href="#"
+                  onClick={() => setSelectedContent('settings')}
+                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                >
+                  <Settings className="h-5 w-5" />
+                  Settings
                 </Link>
               </nav>
               <div className="mt-auto">
@@ -263,7 +247,7 @@ export default function Dashboard() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search products..."
+                  placeholder="Search jobs..."
                   className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
                 />
               </div>
