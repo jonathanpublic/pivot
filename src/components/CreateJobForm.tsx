@@ -85,7 +85,7 @@ const CreateJobForm = () => {
 
   return (
     <Sheet>
-      <SheetTrigger onClick={openSheet} className='bg-gray-800 text-white right-0 ml-auto mr-12 mt-2 px-4 py-2 rounded-lg hover:bg-blue-700'>Create Job</SheetTrigger>
+      <SheetTrigger onClick={openSheet} className='bg-secondary text-primary right-0 ml-auto mr-12 mt-2 px-4 py-2 rounded-lg hover:bg-primary hover:text-secondary transition-colors duration-300 ease-in-out'>Create Job</SheetTrigger>
       { isOpen && (
         <SheetContent>
           <SheetHeader>
@@ -130,15 +130,15 @@ const CreateJobForm = () => {
                 <option value="inspection">Inspection</option>
               </select>
 
-              <button onClick={() =>  {
+              <Button onClick={() =>  {
                 toast({
                   title: "Success: New job created",
                   description: `${formatDateDescription()}`,
                 })
               }}
-                type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                type="submit" className="bg-primary text-secondary px-4 py-2 rounded-lg hover:bg-secondary hover:text-primary">
                 Create Job
-              </button>
+              </Button>
             </div>
           </form>
         </SheetContent>

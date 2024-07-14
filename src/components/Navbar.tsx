@@ -123,8 +123,8 @@ export default function Navbar() {
         <SunMoon onClick={() => toggleDarkMode()} strokeWidth={1.25} className='cursor-pointer'/>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full hover:border-black hover:bg-gray-300">
-              <CircleUser className="h-5 w-5 " />
+            <Button variant="outline" size="icon" className="rounded-full">
+              <CircleUser className="h-5 w-5" />
               <span className="sr-only">Toggle user menu</span>
             </Button>
           </DropdownMenuTrigger>

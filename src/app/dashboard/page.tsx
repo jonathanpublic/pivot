@@ -5,6 +5,17 @@ import { database}  from '@/firebase/firebase';
 import CreateJobForm from '@/components/CreateJobForm';
 import { useDarkMode } from '../DarkModeProvider';
 import { CarouselPlugin } from '@/components/CarousolPlugin';
+import { ScrollArea } from "@/components/ui/scroll-area"
+import SelectComponent from '@/components/SelectCompany';
+// import { Separator } from "@/components/ui/separator"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+ 
 import {
   Card,
   CardContent,
@@ -32,6 +43,11 @@ interface Job {
   
 export default function Dashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+  const [jobTypeFilter, setJobTypeFilter] = useState('all')
+  const [companyFilter, setCompanyFilter] = useState('all');
+
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showJobModal, setShowJobModal] = useState(false)
   const { isDarkMode } = useDarkMode(); // Access dark mode state
@@ -56,6 +72,7 @@ export default function Dashboard() {
               }));
               jobsArray.sort((a, b) => b.timestamp - a.timestamp);
               setJobs(jobsArray);
+              setFilteredJobs(jobsArray);
             } else {
               console.log("No jobs data")
             }
@@ -70,59 +87,61 @@ export default function Dashboard() {
     fetchJobNames();
   }, [])
 
+  const handleFilterJobs = () => {
+    const lowercaseJobTypeFilter = jobTypeFilter.toLowerCase();
+    const lowercaseCompanyFilter = companyFilter.toLowerCase();
+  
+    const filtered = jobs.filter(job => {
+      const jobTypeMatch = lowercaseJobTypeFilter === 'all' || job.jobType.toLowerCase() === lowercaseJobTypeFilter;
+      const companyMatch = lowercaseCompanyFilter === 'all' || job.companyName.toLowerCase() === lowercaseCompanyFilter;
+      return jobTypeMatch && companyMatch;
+    });
+  
+    setFilteredJobs(filtered);
+  };
+  
+  useEffect(() => {
+    handleFilterJobs();
+  }, [jobTypeFilter, companyFilter, jobs]);
+
   return (
-    <div className="mt-4 h-full pl-10 pr-10 w-full ">
-       <div className="flex items-center mb-4">
-         <CreateJobForm />
-       </div>
-       <Carousel
-        opts={{
-          align: "start",
-          slidesToScroll: 10, // Number of slides to scroll per interaction
-          loop: true, // Enable infinite loop
-        }}
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 "
-      >
-        <CarouselContent>
-          {jobs.map((job, index) => (
-            <CarouselItem key={index} >
-              <div onClick={handleGoToJob} className="cursor-pointer w-full max-w-xs rounded-lg shadow-md p-4">
-                <h3 className="text-lg font-semibold">{job.name}</h3>
-                <p className="text-sm text-gray-500">{job.companyName}</p>
-                <p className="text-sm text-gray-500">{job.jobType}</p>
-                {/* Add more job details as needed */}
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselNext className="right-0" />
-        <CarouselPrevious className="left-0" />
-      </Carousel>
-      <Carousel
-        opts={{
-          align: "start",
-          slidesToScroll: 10
-
-        }}
-        className="grid overflow-hidden"
-      >
-        <CarouselContent className="flex">
-          {jobs.map((job, index) => (
-            <CarouselItem key={index} className="flex  flex-1">
-              <Card key={job.id} onClick={handleGoToJob} className="cursor-pointer rounded-lg shadow-md p-4">
-                <CardHeader className="text-lg font-semibold">{job.name}</CardHeader>
-                <CardContent className="text-sm text-gray-500">{job.companyName}</CardContent>
-                <CardContent className="text-sm text-gray-500">{job.jobType}</CardContent>
-                {/* Add more job details as needed */}
-              </Card>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselNext />
-        <CarouselPrevious />
-
-      </Carousel>
+    <>
+    <div className="flex items-center pl-10 pt-4">
+    <Select value={jobTypeFilter} onValueChange={setJobTypeFilter}>
+      <SelectTrigger className="w-[180px] ml-6 bg-secondary text-primary">
+        <SelectValue placeholder="Job type" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">
+          Show all
+        </SelectItem>
+        <SelectItem value="vegetation">
+          Vegetation
+        </SelectItem>
+        <SelectItem value="make-ready">
+          Make-ready
+        </SelectItem>
+        <SelectItem value="inspection">
+          Inspection
+        </SelectItem>
+      </SelectContent>
+    </Select>
+    <SelectComponent jobs={jobs} companyFilter={companyFilter} setCompanyFilter={setCompanyFilter}/>
+    <CreateJobForm />
     </div>
+    <ScrollArea className='mt-2 h-[700px]'>
+    <div className="mt-4 h-full pl-10 pr-10 w-full ">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-2 pl-10 pr-10 lg:grid-cols-3 xl:grid-cols-4">
+      {filteredJobs.map((job, index) => (
+        <Card key={job.id} onClick={handleGoToJob} className="cursor-pointer hover:bg-secondary rounded-lg shadow-md p-4">
+          <CardHeader className="text-lg font-semibold">{job.name}</CardHeader>
+          <CardContent className="text-sm text-gray-500">{job.companyName}</CardContent>
+          <CardContent className="text-sm text-gray-500">{job.jobType}</CardContent>
+          {/* Add more job details as needed */}
+        </Card>
+      ))}
+      </div>
+    </div></ScrollArea></>
   );
   // return (
   //   <main className="flex flex-col">
