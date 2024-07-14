@@ -44,7 +44,6 @@ export default function Dashboard() {
               jobsArray.sort((a, b) => b.timestamp - a.timestamp);
               setJobs(jobsArray);
             } else {
-              console.log("HERE")
               console.log("No jobs data")
             }
           } else {
@@ -61,7 +60,7 @@ export default function Dashboard() {
   return (
     <div className="grid w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-          <div className="flex items-center">
+          <div className="flex justify-end items-center">
             <CreateJobForm /> 
           </div>
           <div

@@ -1,82 +1,68 @@
+"use client"
+import { useState } from 'react';
 import Link from 'next/link';
 
 import {
-  Bell,
-  CircleUser,
   Home,
+  LandPlot,
   LineChart,
-  Menu,
   Package,
   Package2,
-  Search,
-  ShoppingCart,
-  Users,
-  Map
+  Map,
+  Settings,
+  SquarePlus,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 export default function Sidebar () {
+  const [showJobCreateTool, setShowJobCreateTool] = useState(false);
+
   return (
     <div className="hidden border-r bg-muted/40 md:block">
-      <div className="flex h-full max-h-screen flex-col gap-2">
+      <div className="flex h-full min-w-72 max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-2 h-6 w-6"
-          >
-            <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-          </svg>
-            <span className="">Pivot Inc</span>
+            <LandPlot strokeWidth={1.55} className='text-blue-500'/>
+            {/* <Package2 className="h-6 w-6 text-blue-700" /> */}
+            <span className="spacing-2">Pivot</span>
           </Link>
-          <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
-            <Bell className="h-4 w-4" />
-            <span className="sr-only">Toggle notifications</span>
-          </Button>
         </div>
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             <Link
+              onClick={() => setShowJobCreateTool(true)}
               href="/dashboard"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Home className="h-4 w-4" />
               Dashboard
             </Link>
-            <div
-            
-              // onClick={() => setShowMap(true)}
-              className="flex items-center gap-3 cursor-pointer rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            <Link
+              href="/map"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Map className="h-4 w-4" />
-              Map
-            </div>
-            <Link
-              href="#"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-              >
-              <Package className="h-4 w-4" />
-              Products
-            </Link> 
-            <Link
-              href="#"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-            >
-              <Users className="h-4 w-4" />
-              Customers
+              Map 
             </Link>
             <Link
-              href="#"
+              href="/jobs"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <Package className="h-4 w-4" />
+              Jobs
+            </Link>
+            <Link
+              href="/analytics"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <LineChart className="h-4 w-4" />
               Analytics
+            </Link>
+            <Link
+              href="/settings"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <Settings className="h-4 w-4" />
+              Settings
             </Link>
           </nav>
         </div>
