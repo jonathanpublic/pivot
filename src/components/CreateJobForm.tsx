@@ -36,11 +36,11 @@ const CreateJobForm = () => {
       try {
         const jobsRef = ref(database, "/");
         push(jobsRef, {
-          name: jobName,
           jobName: jobName,
           companyName: company,
           jobType: jobType,
           lidarUploaded: false,
+          status: 'pending',
           timestamp: Date.now(),
         }).then(() => {
             console.log('Job created successfully');

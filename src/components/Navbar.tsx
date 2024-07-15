@@ -56,32 +56,7 @@ export default function Navbar() {
   return (
   
     <header className="flex h-24 items-center border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-      <div className="flex flex-1 items-center w-1/3">
-        <form className="relative w-full mr-4 md:mr-0 md:w-2/3 lg:w-1/3">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search jobs..."
-              className="w-full appearance-none bg-background pl-8 shadow-none"
-            />
-          </div>
-        </form>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href="#"
-                className="flex h-9 w-9 ml-50 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-              >
-                <Settings className="h-5 w-5" />
-                <span className="sr-only">Settings</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right">Settings</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+     
         
     {/* Left section with search and settings */}
     {/* <div className="flex flex-1 items-center mr-30">
@@ -113,18 +88,7 @@ export default function Navbar() {
     </div> */}
     
     {/* Center section (empty flex-1 to distribute remaining space evenly) */}
-    <div className="flex-1">
-    <form>
-           <div className="relative">
-               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                 type="search"
-                placeholder="Search jobs..."
-                 className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-              />
-            </div>
-          </form>
-    </div>
+    
   </header>
 
   //   <div className="flex flex-col w-full ml-10">

@@ -1,6 +1,7 @@
 "use client"
 
-import * as React from "react"
+import { useRouter } from 'next/router';
+import { useState, useEffect } from "react"
 import {
   CaretSortIcon,
   ChevronDownIcon,
@@ -18,6 +19,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -38,112 +40,62 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ref, onValue, get } from 'firebase/database'
+import { database}  from '@/firebase/firebase';
 
-const data: Payment[] = [
-  {
-    id: "m5gr84i9",
-    amount: 316,
-    status: "success",
-    email: "ken99@yahoo.com",
-  },
-  {
-    id: "3u1reuv4",
-    amount: 242,
-    status: "success",
-    email: "Abe45@gmail.com",
-  },
-  {
-    id: "derv1ws0",
-    amount: 837,
-    status: "processing",
-    email: "Monserrat44@gmail.com",
-  },
-  {
-    id: "5kma53ae",
-    amount: 874,
-    status: "success",
-    email: "Silas22@gmail.com",
-  },
-  {
-    id: "bhqecj4p",
-    amount: 721,
-    status: "failed",
-    email: "carmella@hotmail.com",
-  },
-]
 
-export type Payment = {
+
+export type Job = {
   id: string
-  amount: number
-  status: "pending" | "processing" | "success" | "failed"
-  email: string
+  companyName: string
+  name: string
+  jobType: string
+  // status: "pending" | "processing" | "success" | "failed"
 }
 
-export const columns: ColumnDef<Payment>[] = [
+export const columns: ColumnDef<Job>[] = [
   {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status")}</div>
-    ),
-  },
-  {
-    accessorKey: "email",
+    accessorKey: "companyName",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
+          className="pl-0"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Email
+          Company
           <CaretSortIcon className="ml-2 h-4 w-4" />
         </Button>
       )
     },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+    cell: ({ row }) => <div className="lowercase">{row.getValue("companyName")}</div>,
   },
   {
-    accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"))
-
-      // Format the amount as a dollar amount
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount)
-
-      return <div className="text-right font-medium">{formatted}</div>
+    accessorKey: "name",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          className="pl-0"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Name
+          <CaretSortIcon className="ml-2 h-4 w-4" />
+        </Button>
+      )
     },
+    cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+  },
+  {
+    accessorKey: "jobType",
+    header: () => <div>Type</div>,
+    cell: ({ row }) => <div className="capitalize">{row.getValue("jobType")}</div>,
   },
   {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const payment = row.original
+      const payment = row.original;
 
       return (
         <DropdownMenu>
@@ -165,19 +117,79 @@ export const columns: ColumnDef<Payment>[] = [
             <DropdownMenuItem>View payment details</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )
+      );
     },
   },
-]
+];
 
-export function DataTable() {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
+
+export default function DataTable() {
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
+    useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = useState({})
+  
+  const [data, setJobs] = useState<Job[]>([]);
+
+
+  useEffect(() => {
+      const fetchJobNames = async () => {
+        try {
+          const jobsRef = ref(database);
+          onValue(jobsRef,(snapshot) => {
+            if (snapshot.exists()) {
+              const jobData = snapshot.val();
+              if (jobData) {
+                const jobsArray: Job[] = Object.entries(jobData).map(([jobId, job]) => ({
+                  id: jobId,
+                  ...jobData[jobId],
+                }));
+                jobsArray.sort((a, b) => b.timestamp - a.timestamp);
+                setJobs(jobsArray);
+                console.log(jobsArray)
+              //   setFilteredJobs(jobsArray);
+              } else {
+                console.log("No jobs data")
+              }
+            } else {
+              console.log('No jobs found');
+            }
+          })
+        } catch (error) {
+          console.error('Error fetching job names:', error);
+        }
+      };
+      fetchJobNames();
+  }, [])
+
+  const handleLinkClicked = async(event: any, job: any) => {
+    event.preventDefault();
+    const jobRef = ref(database, `/${job.id}`);
+    try {
+      const snapshot = await get(jobRef);
+      const jobDetails = snapshot.val();
+  
+      // if (!jobDetails.lidarUploaded) {
+      //   console.log("Lidar has not been uploaded for this job");
+
+      //   setShowAlert(true); // Set showAlert state to true to display the alert
+      //   setTimeout(() => {
+      //     setShowAlert(false);
+      //   }, 3000); 
+      //   console.log(showAlert)
+      //   return;
+      // }
+  
+      console.log("Lidar has been uploaded, navigating to job details");
+  
+      const router = useRouter();
+      router.push(`/map/${job.id}`);
+    } catch (error) {
+      console.error('Error fetching job details:', error);
+    }
+  }
 
   const table = useReactTable({
     data,
@@ -198,14 +210,16 @@ export function DataTable() {
     },
   })
 
+
+
   return (
-    <div className="flex flex-col w-1/3">
+    <div className="h-full p-4 w-1/2">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter emails..."
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+          placeholder="Filter jobs..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("email")?.setFilterValue(event.target.value)
+            table.getColumn("name")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -261,6 +275,8 @@ export function DataTable() {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
+                  onClick={(event) => handleLinkClicked(event, row.id)}
+                  className="cursor-pointer hover:bg-primary text-primary hover:text-secondary bg-secondary"
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -287,14 +303,11 @@ export function DataTable() {
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
         <div className="space-x-2">
           <Button
             variant="outline"
             size="sm"
+            className="cursor-pointer"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
@@ -303,6 +316,7 @@ export function DataTable() {
           <Button
             variant="outline"
             size="sm"
+            className="cursor-pointer"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >

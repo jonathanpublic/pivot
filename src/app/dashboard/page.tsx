@@ -1,5 +1,4 @@
 "use client"
-import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useState, useEffect, useContext} from 'react';
 import { ref, onValue, get } from 'firebase/database'
@@ -87,32 +86,32 @@ export default function Dashboard() {
     handleFilterJobs();
   }, [jobTypeFilter, companyFilter, jobs]);
 
-  const handleLinkClicked = async(event: any, job: any) => {
-    event.preventDefault();
-    const jobRef = ref(database, `/${job.id}`);
-    try {
-      const snapshot = await get(jobRef);
-      const jobDetails = snapshot.val();
+  // const handleLinkClicked = async(event: any, job: any) => {
+  //   event.preventDefault();
+  //   const jobRef = ref(database, `/${job.id}`);
+  //   try {
+  //     const snapshot = await get(jobRef);
+  //     const jobDetails = snapshot.val();
   
-      if (!jobDetails.lidarUploaded) {
-        console.log("Lidar has not been uploaded for this job");
+  //     if (!jobDetails.lidarUploaded) {
+  //       console.log("Lidar has not been uploaded for this job");
 
-        setShowAlert(true); // Set showAlert state to true to display the alert
-        setTimeout(() => {
-          setShowAlert(false);
-        }, 3000); 
-        console.log(showAlert)
-        return;
-      }
+  //       setShowAlert(true); // Set showAlert state to true to display the alert
+  //       setTimeout(() => {
+  //         setShowAlert(false);
+  //       }, 3000); 
+  //       console.log(showAlert)
+  //       return;
+  //     }
   
-      console.log("Lidar has been uploaded, navigating to job details");
+  //     console.log("Lidar has been uploaded, navigating to job details");
   
-      const router = useRouter();
-      router.push(`/map/${job.id}`);
-    } catch (error) {
-      console.error('Error fetching job details:', error);
-    }
-  }
+  //     // const router = useRouter();
+  //     router.push(`/map/${job.id}`);
+  //   } catch (error) {
+  //     console.error('Error fetching job details:', error);
+  //   }
+  // }
 
   return (
     <div className='flex'>

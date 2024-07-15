@@ -1,7 +1,7 @@
 "use client"
 import Image from "next/image"
 
-import { useRouter } from 'next/router';
+
 import { useState, useEffect, useContext} from 'react';
 import { ref, onValue, get } from 'firebase/database'
 import { database}  from '@/firebase/firebase';
@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Terminal, Upload, ChevronRight } from "lucide-react"
 import MapInstance from '@/components/Map';
 import Sidebar from "@/components/Sidebar";
-import { DataTable } from "@/components/Datatable";
+import  DataTable from "@/components/Datatable";
 import {
   Select,
   SelectContent,
@@ -130,7 +130,6 @@ export default function Dashboard() {
   }, [])
   return (
     <>
-      <Navbar />
       <div className="flex h-full">
       <DataTable />
       {/* <div className="flex flex-col">  */}
@@ -197,8 +196,26 @@ export default function Dashboard() {
           </div>
         </ScrollArea>
       </div> */}
-      <MapInstance />
-      </div> 
+
+<div className="flex flex-col w-full">
+  <div className="h-14 flex justify-center items-center">
+    <div className="w-1/3">
+    <form className="">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search locations..."
+          className="w-full appearance-none bg-background pl-8 shadow-none md:w-full lg:w-full"
+        />
+      </div>
+    </form>
+    </div>
+  </div>
+  <MapInstance />
+</div>
+    </div>
+
   </>
 
   )

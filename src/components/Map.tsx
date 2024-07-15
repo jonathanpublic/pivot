@@ -26,11 +26,11 @@ export default function MapInstance() {
           minZoom = {3}
           maxZoom = {23}
         />
-        <CustomMapControl
+        {/* <CustomMapControl
             controlPosition={ControlPosition.TOP}
             onPlaceSelect={setSelectedPlace}
           />
-        <MapHandler place={selectedPlace} />
+        <MapHandler place={selectedPlace} /> */}
       </APIProvider>
     </div>
   )
