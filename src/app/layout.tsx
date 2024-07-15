@@ -17,13 +17,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  
   return (
     <html lang="en">
       <body className={inter.className}>
           <div className="flex min-h-screen min-w-screen">
             <Sidebar />
             <div className="flex flex-col w-full">
-              <Navbar />
+              {/* <Navbar /> */}
               <Toaster />
               {children}
             </div>

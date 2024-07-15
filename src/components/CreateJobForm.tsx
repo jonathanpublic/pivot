@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { database } from '@/firebase/firebase';
 import { ref, push } from 'firebase/database';
+
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -18,7 +19,7 @@ const CreateJobForm = () => {
   const [jobName, setJobName] = useState('');
   const [company, setCompany] = useState('');
   const [jobType, setJobType] = useState('');
-  const [isOpen, setIsOpen] = useState(false); // State for sheet visibility
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast()
 
 
@@ -39,6 +40,7 @@ const CreateJobForm = () => {
           jobName: jobName,
           companyName: company,
           jobType: jobType,
+          lidarUploaded: false,
           timestamp: Date.now(),
         }).then(() => {
             console.log('Job created successfully');
@@ -56,36 +58,31 @@ const CreateJobForm = () => {
   }
 
   const formatDateDescription = () => {
-    const timestamp = Date.now(); // Get current timestamp in milliseconds
-    const date = new Date(timestamp); // Create a Date object using the timestamp
-  
-    // Define the days of the week and months array for formatting
+    const timestamp = Date.now();
+    const date = new Date(timestamp);
+
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   
-    // Get various date components
     const dayOfWeek = daysOfWeek[date.getDay()];
     const month = months[date.getMonth()];
     const dayOfMonth = date.getDate();
     const year = date.getFullYear();
   
-    // Format time part
     let hours = date.getHours();
     let minutes = date.getMinutes();
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
-    hours = hours ? hours : 12; // Handle midnight (0 hours)
-    minutes = minutes < 10 ? 0 + minutes : minutes; // Ensure two digits for minutes
+    hours = hours ? hours : 12;
+    minutes = minutes < 10 ? 0 + minutes : minutes;
   
-    // Construct the formatted description
     const formattedDescription = `${dayOfWeek}, ${month} ${dayOfMonth}, ${year} at ${hours}:${minutes} ${ampm}`;
-  
     return formattedDescription;
   };
 
   return (
     <Sheet>
-      <SheetTrigger onClick={openSheet} className='bg-secondary text-primary right-0 ml-auto mr-12 mt-2 px-4 py-2 rounded-lg hover:bg-primary hover:text-secondary transition-colors duration-300 ease-in-out'>Create Job</SheetTrigger>
+      <SheetTrigger onClick={openSheet} className='bg-secondary border text-primary right-0 ml-auto mr-12 mt-2 px-4 py-2 rounded-lg hover:bg-primary hover:text-secondary transition-colors duration-300 ease-in-out'>Create Job</SheetTrigger>
       { isOpen && (
         <SheetContent>
           <SheetHeader>

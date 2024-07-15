@@ -1,13 +1,17 @@
 "use client"
+import { useRouter } from 'next/router';
 import Link from 'next/link';
-
 import { useState, useEffect, useContext} from 'react';
-import { ref, onValue } from 'firebase/database'
+import { ref, onValue, get } from 'firebase/database'
+import { Button } from "@/components/ui/button"
 import { database}  from '@/firebase/firebase';
 import CreateJobForm from '@/components/CreateJobForm';
 import { useDarkMode } from '../DarkModeProvider';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import SelectComponent from '@/components/SelectCompany';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Terminal, Upload, ChevronRight } from "lucide-react"
+import MapInstance from '@/components/Map';
 import {
   Select,
   SelectContent,
@@ -35,7 +39,7 @@ export default function Dashboard() {
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [jobTypeFilter, setJobTypeFilter] = useState('all')
   const [companyFilter, setCompanyFilter] = useState('all');
-
+  const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
     const fetchJobNames = async () => {
@@ -83,9 +87,46 @@ export default function Dashboard() {
     handleFilterJobs();
   }, [jobTypeFilter, companyFilter, jobs]);
 
+  const handleLinkClicked = async(event: any, job: any) => {
+    event.preventDefault();
+    const jobRef = ref(database, `/${job.id}`);
+    try {
+      const snapshot = await get(jobRef);
+      const jobDetails = snapshot.val();
+  
+      if (!jobDetails.lidarUploaded) {
+        console.log("Lidar has not been uploaded for this job");
+
+        setShowAlert(true); // Set showAlert state to true to display the alert
+        setTimeout(() => {
+          setShowAlert(false);
+        }, 3000); 
+        console.log(showAlert)
+        return;
+      }
+  
+      console.log("Lidar has been uploaded, navigating to job details");
+  
+      const router = useRouter();
+      router.push(`/map/${job.id}`);
+    } catch (error) {
+      console.error('Error fetching job details:', error);
+    }
+  }
+
   return (
-    <>
+    <div className='flex'>
+    <div className='flex flex-col'>
     <div className="flex items-center pl-10 pt-4">
+    {showAlert && (
+      <Alert className='w-1/4'>
+        <Terminal className="h-4 w-4" />
+        <AlertTitle>Heads up!</AlertTitle>
+        <AlertDescription>
+          Las file must first be uploaded before start the job!
+        </AlertDescription>
+      </Alert>
+    )}
     <Select value={jobTypeFilter} onValueChange={setJobTypeFilter}>
       <SelectTrigger className="w-[180px] ml-6 bg-secondary text-primary">
         <SelectValue placeholder="Job type" />
@@ -112,25 +153,38 @@ export default function Dashboard() {
     <div className="mt-4 h-full pl-10 pr-10 w-full ">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-2 pl-10 pr-10 lg:grid-cols-3 xl:grid-cols-4">
       {filteredJobs.map((job, index) => (
-        <Link
-        key={job.id}
-        href={{
-          pathname: `/map/${job.id}`,
-          query: { id: job.id, name: job.name, companyName: job.companyName, jobType: job.jobType }
-        }}
-        passHref
-      >
-        {/* <Link href={{ pathname:`/map/${job.id}`}, query: { jobId: job.id, name: job.name, companyName: job.companyName } passHref> */}
+        
         <Card key={job.id} className="cursor-pointer hover:bg-secondary rounded-lg shadow-md p-4">
+          <Upload onClick={() => console.log("CLICK")}/>
+          <Link
+          // onClick={(event) => handleLinkClicked(event, job)}
+            key={index}
+            href={{
+              pathname: `/map/${job.id}`,
+              query: { id: job.id, name: job.name, companyName: job.companyName, jobType: job.jobType }
+            }}
+            passHref
+          >
+          <Button variant="outline" size="icon">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          </Link>
           <CardHeader className="text-lg font-semibold">{job.name}</CardHeader>
           <CardContent className="text-sm text-gray-500">{job.companyName}</CardContent>
           <CardContent className="text-sm text-gray-500">{job.jobType}</CardContent>
-          {/* Add more job details as needed */}
+          
         </Card>
-        </Link>
+        
       ))}
       </div>
-    </div></ScrollArea></>
+      
+      
+    </div>
+    </ScrollArea>
+    </div>
+    <MapInstance />
+
+    </div>
   );
   // return (
   //   <main className="flex flex-col">

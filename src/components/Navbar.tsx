@@ -26,6 +26,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
@@ -48,96 +54,142 @@ export default function Navbar() {
     setIsDarkMode(prevMode => !prevMode); // Toggle the state between true and false
   };
   return (
-    <div className="flex flex-col w-full">
-      <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0 md:hidden"
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle navigation menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="flex flex-col">
-            <nav className="grid gap-2 text-lg font-medium">
+  
+    <header className="flex h-24 items-center border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+      <div className="flex flex-1 items-center w-1/3">
+        <form className="relative w-full mr-4 md:mr-0 md:w-2/3 lg:w-1/3">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search jobs..."
+              className="w-full appearance-none bg-background pl-8 shadow-none"
+            />
+          </div>
+        </form>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Link
                 href="#"
-                className="flex items-center gap-2 text-lg font-semibold"
-              >
-                <Package2 className="h-6 w-6 text-red" />
-                <span className="sr-only">Pivot Inc</span>
-              </Link>
-              <Link
-                href="/dashboard"
-                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-              >
-                <Home className="h-5 w-5" />
-                Dashboard
-              </Link>
-              <Link
-                href="/maps"
-                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
-              >
-                <Map className="h-5 w-5" />
-                Map 
-              </Link>
-              <Link
-                href="/jobs"
-                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-              >
-                <Package className="h-5 w-5" />
-                Jobs
-              </Link>
-              <Link
-                href="/analytics"
-                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-              >
-                <LineChart className="h-5 w-5" />
-                Analytics
-              </Link>
-              <Link
-                href="/settings"
-                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                className="flex h-9 w-9 ml-50 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
               >
                 <Settings className="h-5 w-5" />
-                Settings
+                <span className="sr-only">Settings</span>
               </Link>
-            </nav>
-          </SheetContent>
-        </Sheet>
-        <div className="w-full flex-1">
-          <form>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent side="right">Settings</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+        
+    {/* Left section with search and settings */}
+    {/* <div className="flex flex-1 items-center mr-30">
+      <form className="relative w-full">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search jobs..."
+            className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+          />
+        </div>
+      </form>
+      
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href="#"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+            >
+              <Settings className="h-5 w-5" />
+              <span className="sr-only">Settings</span>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right">Settings</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div> */}
+    
+    {/* Center section (empty flex-1 to distribute remaining space evenly) */}
+    <div className="flex-1">
+    <form>
+           <div className="relative">
+               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                type="search"
+                 type="search"
                 placeholder="Search jobs..."
-                className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+                 className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
               />
             </div>
           </form>
-        </div>
-        <SunMoon onClick={() => toggleDarkMode()} strokeWidth={1.25} className='cursor-pointer'/>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="rounded-full">
-              <CircleUser className="h-5 w-5" />
-              <span className="sr-only">Toggle user menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
     </div>
+  </header>
+
+  //   <div className="flex flex-col w-full ml-10">
+  //     <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+        
+  //       <div className="flex">
+  //         <form>
+  //           <div className="">
+  //             <Search className="absolute left-2.5 top-2.5 h-4 w-24 text-muted-foreground" />
+  //             <Input
+  //               type="search"
+  //               placeholder="Search jobs..."
+  //               className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+  //             />
+  //           </div>
+  //         </form>
+  //         <TooltipProvider>
+  //         <Tooltip>
+  //           <TooltipTrigger asChild>
+  //             <Link
+  //               href="#"
+  //               className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+  //             >
+  //               <Settings className="h-5 w-5" />
+  //               <span className="sr-only">Settings</span>
+  //             </Link>
+  //           </TooltipTrigger>
+  //           <TooltipContent side="right">Settings</TooltipContent>
+  //         </Tooltip>
+  //         </TooltipProvider>
+  //       </div>
+  //       <div className="w-full flex-1">
+  //         <form>
+  //           <div className="relative">
+  //             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+  //             <Input
+  //               type="search"
+  //               placeholder="Search jobs..."
+  //               className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+  //             />
+  //           </div>
+  //         </form>
+          
+  //       </div>
+  //       <div>
+        
+  //       <SunMoon onClick={() => toggleDarkMode()} strokeWidth={1.25} className='cursor-pointer'/>
+  //       <DropdownMenu>
+  //         <DropdownMenuTrigger asChild>
+  //           <Button variant="outline" size="icon" className="rounded-full">
+  //             <CircleUser className="h-5 w-5" />
+  //             <span className="sr-only">Toggle user menu</span>
+  //           </Button>
+  //         </DropdownMenuTrigger>
+  //         <DropdownMenuContent align="end">
+  //           <DropdownMenuLabel>My Account</DropdownMenuLabel>
+  //           <DropdownMenuSeparator />
+  //           <DropdownMenuItem>Settings</DropdownMenuItem>
+  //           <DropdownMenuItem>Support</DropdownMenuItem>
+  //           <DropdownMenuSeparator />
+  //           <DropdownMenuItem>Logout</DropdownMenuItem>
+  //         </DropdownMenuContent>
+  //       </DropdownMenu>
+  //       </div>
+  //     </header>
+  //   </div>
   )
 }
