@@ -1,6 +1,8 @@
 "use client"
 
 import { useRouter } from 'next/router';
+import Link from 'next/link';
+
 import { useState, useEffect } from "react"
 import {
   CaretSortIcon,
@@ -123,7 +125,7 @@ export const columns: ColumnDef<Job>[] = [
 ];
 
 
-export default function DataTable() {
+export function DataTable() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
@@ -133,6 +135,22 @@ export default function DataTable() {
   
   const [data, setJobs] = useState<Job[]>([]);
 
+  // const handleLinkClicked = async (event: any, job: any) => {
+  //   event.preventDefault();
+  //   console.log(job.original)
+  //   const jobRef = ref(database, `/${job.id}`);
+  //   try {
+  //     const snapshot = await get(jobRef);
+  //     const jobDetails = snapshot.val();
+  
+  //     console.log("Lidar has been uploaded, navigating to job details");
+  
+  //     // const router = useRouter();
+  //     // router.push(`/map/${job.id}`);
+  //   } catch (error) {
+  //     console.error('Error fetching job details:', error);
+  //   }
+  // }
 
   useEffect(() => {
       const fetchJobNames = async () => {
@@ -164,32 +182,33 @@ export default function DataTable() {
       fetchJobNames();
   }, [])
 
-  const handleLinkClicked = async(event: any, job: any) => {
-    event.preventDefault();
-    const jobRef = ref(database, `/${job.id}`);
-    try {
-      const snapshot = await get(jobRef);
-      const jobDetails = snapshot.val();
   
-      // if (!jobDetails.lidarUploaded) {
-      //   console.log("Lidar has not been uploaded for this job");
+  // const handleLinkClicked = async(event: any, job: any) => {
+  //   event.preventDefault();
+  //   const jobRef = ref(database, `/${job.id}`);
+  //   try {
+  //     const snapshot = await get(jobRef);
+  //     const jobDetails = snapshot.val();
+  
+  //     // if (!jobDetails.lidarUploaded) {
+  //     //   console.log("Lidar has not been uploaded for this job");
 
-      //   setShowAlert(true); // Set showAlert state to true to display the alert
-      //   setTimeout(() => {
-      //     setShowAlert(false);
-      //   }, 3000); 
-      //   console.log(showAlert)
-      //   return;
-      // }
+  //     //   setShowAlert(true); // Set showAlert state to true to display the alert
+  //     //   setTimeout(() => {
+  //     //     setShowAlert(false);
+  //     //   }, 3000); 
+  //     //   console.log(showAlert)
+  //     //   return;
+  //     // }
   
-      console.log("Lidar has been uploaded, navigating to job details");
+  //     console.log("Lidar has been uploaded, navigating to job details");
   
-      const router = useRouter();
-      router.push(`/map/${job.id}`);
-    } catch (error) {
-      console.error('Error fetching job details:', error);
-    }
-  }
+  //     const router = useRouter();
+  //     router.push(`/map/${job.id}`);
+  //   } catch (error) {
+  //     console.error('Error fetching job details:', error);
+  //   }
+  // }
 
   const table = useReactTable({
     data,
@@ -273,12 +292,21 @@ export default function DataTable() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
+                <Link
+               
+                    key={row.id}
+                    href={{
+                      pathname: `/map/${row.original.id}`,
+                      query: { id: row.original.id, name: row.original.name, companyName: row.original.companyName, jobType: row.original.jobType }
+                    }}
+                    passHref
+                  >
                 <TableRow
                   key={row.id}
-                  onClick={(event) => handleLinkClicked(event, row.id)}
                   className="cursor-pointer hover:bg-primary text-primary hover:text-secondary bg-secondary"
                   data-state={row.getIsSelected() && "selected"}
                 >
+                  
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -287,7 +315,10 @@ export default function DataTable() {
                       )}
                     </TableCell>
                   ))}
+                 
                 </TableRow>
+                </Link>
+                
               ))
             ) : (
               <TableRow>

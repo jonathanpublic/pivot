@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Terminal, Upload, ChevronRight } from "lucide-react"
 import MapInstance from '@/components/Map';
 import Sidebar from "@/components/Sidebar";
-import  DataTable from "@/components/Datatable";
+import  { DataTable } from "@/components/Datatable";
 import {
   Select,
   SelectContent,
