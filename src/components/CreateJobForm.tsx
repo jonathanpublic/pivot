@@ -75,7 +75,7 @@ const CreateJobForm = () => {
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
     hours = hours ? hours : 12; // Handle midnight (0 hours)
-    minutes = minutes < 10 ? '0' + minutes : minutes; // Ensure two digits for minutes
+    minutes = minutes < 10 ? 0 + minutes : minutes; // Ensure two digits for minutes
   
     // Construct the formatted description
     const formattedDescription = `${dayOfWeek}, ${month} ${dayOfMonth}, ${year} at ${hours}:${minutes} ${ampm}`;
