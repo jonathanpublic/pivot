@@ -1,13 +1,13 @@
 "use client"
+import Link from 'next/link';
+
 import { useState, useEffect, useContext} from 'react';
 import { ref, onValue } from 'firebase/database'
 import { database}  from '@/firebase/firebase';
 import CreateJobForm from '@/components/CreateJobForm';
 import { useDarkMode } from '../DarkModeProvider';
-import { CarouselPlugin } from '@/components/CarousolPlugin';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import SelectComponent from '@/components/SelectCompany';
-// import { Separator } from "@/components/ui/separator"
 import {
   Select,
   SelectContent,
@@ -19,19 +19,8 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
-
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
 
 interface Job {
   id: string,
@@ -47,16 +36,6 @@ export default function Dashboard() {
   const [jobTypeFilter, setJobTypeFilter] = useState('all')
   const [companyFilter, setCompanyFilter] = useState('all');
 
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showJobModal, setShowJobModal] = useState(false)
-  const { isDarkMode } = useDarkMode(); // Access dark mode state
-
-
-  console.log(isDarkMode)
-  const handleGoToJob = () => {
-
-  }
 
   useEffect(() => {
     const fetchJobNames = async () => {
@@ -129,16 +108,26 @@ export default function Dashboard() {
     <SelectComponent jobs={jobs} companyFilter={companyFilter} setCompanyFilter={setCompanyFilter}/>
     <CreateJobForm />
     </div>
-    <ScrollArea className='mt-2 h-[700px]'>
+    <ScrollArea className='mt-2 h-[860px]'>
     <div className="mt-4 h-full pl-10 pr-10 w-full ">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-2 pl-10 pr-10 lg:grid-cols-3 xl:grid-cols-4">
       {filteredJobs.map((job, index) => (
-        <Card key={job.id} onClick={handleGoToJob} className="cursor-pointer hover:bg-secondary rounded-lg shadow-md p-4">
+        <Link
+        key={job.id}
+        href={{
+          pathname: `/map/${job.id}`,
+          query: { id: job.id, name: job.name, companyName: job.companyName, jobType: job.jobType }
+        }}
+        passHref
+      >
+        {/* <Link href={{ pathname:`/map/${job.id}`}, query: { jobId: job.id, name: job.name, companyName: job.companyName } passHref> */}
+        <Card key={job.id} className="cursor-pointer hover:bg-secondary rounded-lg shadow-md p-4">
           <CardHeader className="text-lg font-semibold">{job.name}</CardHeader>
           <CardContent className="text-sm text-gray-500">{job.companyName}</CardContent>
           <CardContent className="text-sm text-gray-500">{job.jobType}</CardContent>
           {/* Add more job details as needed */}
         </Card>
+        </Link>
       ))}
       </div>
     </div></ScrollArea></>

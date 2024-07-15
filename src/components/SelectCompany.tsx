@@ -41,8 +41,8 @@ const SelectComponent: React.FC<SelectComponentProps> = ({ jobs, companyFilter, 
       </SelectTrigger>
       <SelectContent>
         <SelectItem value='all'>Show all</SelectItem>
-        {companys.map((jobName) => (
-            <SelectItem value={jobName}>
+        {companys.map((jobName, index) => (
+            <SelectItem key={index} value={jobName}>
               {jobName}
             </SelectItem>
         ))}
