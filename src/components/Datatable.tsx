@@ -3,7 +3,8 @@
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-import { useState, useEffect } from "react"
+import { Download, Upload, ChevronRight, Settings } from "lucide-react"
+import React, { useState, useEffect } from "react"
 import {
   CaretSortIcon,
   ChevronDownIcon,
@@ -23,7 +24,6 @@ import {
 } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -44,7 +44,6 @@ import {
 } from "@/components/ui/table"
 import { ref, onValue, get } from 'firebase/database'
 import { database}  from '@/firebase/firebase';
-
 
 
 export type Job = {
@@ -182,10 +181,12 @@ export function DataTable() {
       fetchJobNames();
   }, [])
 
+
   
   // const handleLinkClicked = async(event: any, job: any) => {
+  //   console.log("here")
   //   event.preventDefault();
-  //   const jobRef = ref(database, `/${job.id}`);
+  //   const jobRef = ref(database, `/map/${job.original.id}`);
   //   try {
   //     const snapshot = await get(jobRef);
   //     const jobDetails = snapshot.val();
@@ -202,9 +203,6 @@ export function DataTable() {
   //     // }
   
   //     console.log("Lidar has been uploaded, navigating to job details");
-  
-  //     const router = useRouter();
-  //     router.push(`/map/${job.id}`);
   //   } catch (error) {
   //     console.error('Error fetching job details:', error);
   //   }
@@ -232,8 +230,8 @@ export function DataTable() {
 
 
   return (
-    <div className="h-full p-4 w-1/2">
-      <div className="flex items-center py-4">
+    <div className="h-full p-4">
+      <div className="flex justify-between items-center py-4">
         <Input
           placeholder="Filter jobs..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -242,11 +240,15 @@ export function DataTable() {
           }
           className="max-w-sm"
         />
+        <div className='flex'>
+          <Upload className=''/>
+          <Download className='ml-4' strokeWidth={1.5} />
+        </div>
+
+        <div className=''>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
-            </Button>
+            <Settings className='cursor-pointer h-6'></Settings>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {table
@@ -268,6 +270,7 @@ export function DataTable() {
               })}
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -292,32 +295,34 @@ export function DataTable() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <Link
-               
-                    key={row.id}
-                    href={{
-                      pathname: `/map/${row.original.id}`,
-                      query: { id: row.original.id, name: row.original.name, companyName: row.original.companyName, jobType: row.original.jobType }
-                    }}
-                    passHref
-                  >
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer hover:bg-primary text-primary hover:text-secondary bg-secondary"
                   data-state={row.getIsSelected() && "selected"}
                 >
-                  
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell 
+                      key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
                       )}
                     </TableCell>
                   ))}
-                 
+                 <Button
+                  className='m-4 w-4 h-8 bg-secondary text-primary hover:text-secondary hover:bg-primary'
+                 >
+                    <Link
+                      key={row.id}
+                      href={{
+                        pathname: `/map/${row.original.id}`,
+                        query: { id: row.original.id, name: row.original.name, companyName: row.original.companyName, jobType: row.original.jobType }
+                      }}
+                      passHref
+                    >
+                    <ChevronRight />
+                    </Link>
+                  </Button>
                 </TableRow>
-                </Link>
                 
               ))
             ) : (

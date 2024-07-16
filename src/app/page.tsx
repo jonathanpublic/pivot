@@ -131,91 +131,25 @@ export default function Dashboard() {
   return (
     <>
       <div className="flex h-full">
-      <DataTable />
-      {/* <div className="flex flex-col">  */}
-        
-        {/* <div className="flex items-center pl-10">
-          {showAlert && (
-            <Alert className='w-1/4'>
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>Heads up!</AlertTitle>
-              <AlertDescription>
-                Las file must first be uploaded before start the job!
-              </AlertDescription>
-            </Alert>
-          )}
-          <Select value={jobTypeFilter} onValueChange={setJobTypeFilter}>
-            <SelectTrigger className="w-[180px] ml-6 bg-secondary text-primary">
-              <SelectValue placeholder="Job type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                Show all
-              </SelectItem>
-              <SelectItem value="vegetation">
-                Vegetation
-              </SelectItem>
-              <SelectItem value="make-ready">
-                Make-ready
-              </SelectItem>
-              <SelectItem value="inspection">
-                Inspection
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <SelectComponent jobs={jobs} companyFilter={companyFilter} setCompanyFilter={setCompanyFilter}/>
-          <CreateJobForm />
-        </div>
-        <ScrollArea className='mt-2 h-[860px]'>
-          <div className="mt-4 h-full pl-10 pr-10 w-full ">
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-2 pl-10 pr-10 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredJobs.map((job, index) => (
-              
-              <Card key={job.id} className="cursor-pointer hover:bg-secondary rounded-lg shadow-md p-4">
-                <Upload onClick={() => console.log("CLICK")}/>
-                <Link
-                // onClick={(event) => handleLinkClicked(event, job)}
-                  key={index}
-                  href={{
-                    pathname: `/map/${job.id}`,
-                    query: { id: job.id, name: job.name, companyName: job.companyName, jobType: job.jobType }
-                  }}
-                  passHref
-                >
-                <Button variant="outline" size="icon">
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                </Link>
-                <CardHeader className="text-lg font-semibold">{job.name}</CardHeader>
-                <CardContent className="text-sm text-gray-500">{job.companyName}</CardContent>
-                <CardContent className="text-sm text-gray-500">{job.jobType}</CardContent>
-                
-              </Card>
-            ))}
+        <DataTable />
+        <div className="flex flex-col w-full">
+        <div className="h-14 flex justify-center items-center">
+          <div className="w-1/3">
+          <form className="">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search locations..."
+                className="w-full appearance-none bg-background pl-8 shadow-none md:w-full lg:w-full"
+              />
             </div>
+          </form>
           </div>
-        </ScrollArea>
-      </div> */}
-
-<div className="flex flex-col w-full">
-  <div className="h-14 flex justify-center items-center">
-    <div className="w-1/3">
-    <form className="">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search locations..."
-          className="w-full appearance-none bg-background pl-8 shadow-none md:w-full lg:w-full"
-        />
+        </div>
+        <MapInstance />
       </div>
-    </form>
     </div>
-  </div>
-  <MapInstance />
-</div>
-    </div>
-
   </>
 
   )
