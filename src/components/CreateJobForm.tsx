@@ -82,7 +82,7 @@ const CreateJobForm = () => {
 
   return (
     <Sheet>
-      <SheetTrigger onClick={openSheet} className='bg-secondary border text-primary right-0 ml-auto mr-12 mt-2 px-4 py-2 rounded-lg hover:bg-primary hover:text-secondary transition-colors duration-300 ease-in-out'>Create Job</SheetTrigger>
+      <SheetTrigger onClick={openSheet}>Create Job</SheetTrigger>
       { isOpen && (
         <SheetContent>
           <SheetHeader>

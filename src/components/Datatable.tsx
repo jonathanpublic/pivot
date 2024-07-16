@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import CreateJobForm from './CreateJobForm';
 
 import { Download, Upload, ChevronRight, Settings } from "lucide-react"
 import React, { useState, useEffect } from "react"
@@ -49,7 +50,7 @@ import { database}  from '@/firebase/firebase';
 export type Job = {
   id: string
   companyName: string
-  name: string
+  jobName: string
   jobType: string
   // status: "pending" | "processing" | "success" | "failed"
 }
@@ -72,7 +73,7 @@ export const columns: ColumnDef<Job>[] = [
     cell: ({ row }) => <div className="lowercase">{row.getValue("companyName")}</div>,
   },
   {
-    accessorKey: "name",
+    accessorKey: "jobName",
     header: ({ column }) => {
       return (
         <Button
@@ -85,7 +86,7 @@ export const columns: ColumnDef<Job>[] = [
         </Button>
       )
     },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+    cell: ({ row }) => <div className="lowercase">{row.getValue("jobName")}</div>,
   },
   {
     accessorKey: "jobType",
@@ -124,32 +125,19 @@ export const columns: ColumnDef<Job>[] = [
 ];
 
 
-export function DataTable() {
+// interface DataTableProps {
+//   setSelectedRow: React.Dispatch<React.SetStateAction<string>>;
+//   selectedRow: string;
+// }
+
+export function DataTable({ setSelectedRow, selectedRow }: any) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
   const [columnVisibility, setColumnVisibility] =
     useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  
   const [data, setJobs] = useState<Job[]>([]);
-
-  // const handleLinkClicked = async (event: any, job: any) => {
-  //   event.preventDefault();
-  //   console.log(job.original)
-  //   const jobRef = ref(database, `/${job.id}`);
-  //   try {
-  //     const snapshot = await get(jobRef);
-  //     const jobDetails = snapshot.val();
-  
-  //     console.log("Lidar has been uploaded, navigating to job details");
-  
-  //     // const router = useRouter();
-  //     // router.push(`/map/${job.id}`);
-  //   } catch (error) {
-  //     console.error('Error fetching job details:', error);
-  //   }
-  // }
 
   useEffect(() => {
       const fetchJobNames = async () => {
@@ -181,33 +169,6 @@ export function DataTable() {
       fetchJobNames();
   }, [])
 
-
-  
-  // const handleLinkClicked = async(event: any, job: any) => {
-  //   console.log("here")
-  //   event.preventDefault();
-  //   const jobRef = ref(database, `/map/${job.original.id}`);
-  //   try {
-  //     const snapshot = await get(jobRef);
-  //     const jobDetails = snapshot.val();
-  
-  //     // if (!jobDetails.lidarUploaded) {
-  //     //   console.log("Lidar has not been uploaded for this job");
-
-  //     //   setShowAlert(true); // Set showAlert state to true to display the alert
-  //     //   setTimeout(() => {
-  //     //     setShowAlert(false);
-  //     //   }, 3000); 
-  //     //   console.log(showAlert)
-  //     //   return;
-  //     // }
-  
-  //     console.log("Lidar has been uploaded, navigating to job details");
-  //   } catch (error) {
-  //     console.error('Error fetching job details:', error);
-  //   }
-  // }
-
   const table = useReactTable({
     data,
     columns,
@@ -227,28 +188,25 @@ export function DataTable() {
     },
   })
 
-
+  const handleJobSelected = (row: any) => {
+    setSelectedRow(row)
+  }
 
   return (
-    <div className="h-full p-4">
-      <div className="flex justify-between items-center py-4">
+    <div className="h-full pl-4 pr-4">
+      <div className="flex pt-4 pb-4 justify-between items-center">
         <Input
           placeholder="Filter jobs..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("jobName")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
-        <div className='flex'>
-          <Upload className=''/>
-          <Download className='ml-4' strokeWidth={1.5} />
-        </div>
-
-        <div className=''>
+        <CreateJobForm />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Settings className='cursor-pointer h-6'></Settings>
+            <Settings className='cursor-pointer w-10'></Settings>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {table
@@ -270,7 +228,6 @@ export function DataTable() {
               })}
           </DropdownMenuContent>
         </DropdownMenu>
-        </div>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -297,6 +254,10 @@ export function DataTable() {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
+                  onClick={() => handleJobSelected(row)}
+                  className={`${
+                    selectedRow && selectedRow.id === row.id ? 'bg-primary text-secondary' : ''
+                  } hover:bg-primary hover:text-secondary cursor-pointer transition duration-300`}
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -308,10 +269,7 @@ export function DataTable() {
                       )}
                     </TableCell>
                   ))}
-                 <Button
-                  className='m-4 w-4 h-8 bg-secondary text-primary hover:text-secondary hover:bg-primary'
-                 >
-                    <Link
+                    {/* <Link
                       key={row.id}
                       href={{
                         pathname: `/map/${row.original.id}`,
@@ -320,8 +278,7 @@ export function DataTable() {
                       passHref
                     >
                     <ChevronRight />
-                    </Link>
-                  </Button>
+                    </Link> */}
                 </TableRow>
                 
               ))
@@ -338,6 +295,7 @@ export function DataTable() {
           </TableBody>
         </Table>
       </div>
+      
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="space-x-2">
           <Button
