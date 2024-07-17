@@ -1,19 +1,19 @@
 package handle
 
 import (
-	// "bytes"
+	"bytes"
 	// "database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
-	// "io/ioutil"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	// "os/exec"
-	// "os/signal"
+	"os/exec"
+	"os/signal"
 	"path/filepath"
-	// "syscall"
+	"syscall"
 
 	"github.com/gorilla/mux"
 	// "github.com/gorilla/sessions"
@@ -44,6 +44,7 @@ func HandleUploadLas() http.HandlerFunc {
 		}
 
 		baseDir := filepath.Join(homeDir, "pivot/uploads")
+		folderPath := filepath.Join(baseDir, jobId)
 		if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
 			http.Error(w, "Error creating uploads folder", http.StatusInternalServerError)
 			return
@@ -72,11 +73,11 @@ func HandleUploadLas() http.HandlerFunc {
 			return
 		}
 
-		//err = convertToOctree(folderPath, filePath, jobId)
-		//if err != nil {
-		//  http.Error(w, err.Error(), http.StatusInternalServerError)
-		//  return
-		//}
+		err = convertToOctree(folderPath, filePath, jobId)
+		if err != nil {
+		 http.Error(w, err.Error(), http.StatusInternalServerError)
+		 return
+		}
 
 		// query = `UPDATE jobs SET lidar_uploaded = true WHERE id = $1`
 		// _, err = db.Exec(query, jobId)
@@ -115,13 +116,13 @@ func HandleReplaceLas() http.HandlerFunc {
 		}
 
 		baseDir := filepath.Join(homeDir, "pivot/uploads")
-		if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
+		folderPath := filepath.Join(baseDir, jobId)
+		if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
 			http.Error(w, "Error creating uploads folder", http.StatusInternalServerError)
 			return
 		}
 
-		filePath := filepath.Join(baseDir, fmt.Sprintf("%s.las", jobId))
-		fmt.Println(filePath)
+		filePath := filepath.Join(folderPath, fmt.Sprintf("%s.las", jobId))
 		if _, err := os.Stat(filePath); err == nil {
 			if err := os.Remove(filePath); err != nil {
 				http.Error(w, "Error deleting existing file", http.StatusInternalServerError)
@@ -143,11 +144,11 @@ func HandleReplaceLas() http.HandlerFunc {
 			return
 		}
 
-		//err = convertToOctree(folderPath, filePath, jobId)
-		//if err != nil {
-		//  http.Error(w, err.Error(), http.StatusInternalServerError)
-		//  return
-		//}
+		err = convertToOctree(folderPath, filePath, jobId)
+		if err != nil {
+		 http.Error(w, err.Error(), http.StatusInternalServerError)
+		 return
+		}
 
 		response := map[string]interface{}{
 			"message": "File uploaded successfully",
@@ -159,14 +160,125 @@ func HandleReplaceLas() http.HandlerFunc {
 	}
 }
 
-// func convertToOctree(folderPath, lasFilePath, jobId string) error {
-// 	// Invoke PotreeConverter process
-// 	potreeConverterPath := "/home/ja/pivot/static/PotreeConverter"
+func convertToOctree(folderPath, lasFilePath, jobId string) error {
+  // Invoke PotreeConverter process
+  potreeConverterPath := "/home/ja/pivot/PotreeConverter"
 
+  outputDir := filepath.Join(folderPath, jobId)
+  cmd := exec.Command(potreeConverterPath, lasFilePath, "-o", outputDir)
+  cmd.Stdout = os.Stdout
+  cmd.Stderr = os.Stderr
+
+  err := cmd.Start()
+  if err != nil {
+    return fmt.Errorf("Error starting PotreeConverter process")
+  }
+
+
+	// Channel to listen for interrupt signal
+	done := make(chan error, 1)
+	go func() {
+		done <- cmd.Wait()
+	}()
+
+	// Handle interrupt signal to terminate the process gracefully
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case <-sig:
+		// Terminate the process
+		err := cmd.Process.Signal(os.Interrupt)
+		if err != nil {
+			log.Printf("Error sending interrupt signal to PotreeConverter process: %v\n", err)
+		}
+		log.Println("PotreeConverter process terminated by interrupt signal.")
+	case err := <-done:
+		if err != nil {
+			return fmt.Errorf("Error waiting for PotreeConverter process to finish: %v", err)
+		}
+		log.Println("PotreeConverter process completed successfully.")
+	}
+
+	return nil
+  //err = cmd.Wait()
+  //if err != nil {
+  //  return fmt.Errorf("Error waiting for PotreeConverter process to finish")
+  //}
+
+  //return nil
+}
+
+
+// func convertToOctree(folderPath, lasFilePath, jobId string) error {
+// 	// Get user's home directory
+// 	homeDir, err := os.UserHomeDir()
+// 	if err != nil {
+// 			return fmt.Errorf("error getting user's home directory: %v", err)
+// 	}
+
+// 	// Path to PotreeConverter executable
+// 	potreeConverterPath := filepath.Join(homeDir, "pivot", "PotreeConverter")
+
+// 	// Construct output directory path
 // 	outputDir := filepath.Join(folderPath, jobId)
+
+// 	// Ensure outputDir exists; create if not
+// 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
+// 			return fmt.Errorf("failed to create output directory: %v", err)
+// 	}
+
+// 	// Create command to run PotreeConverter
 // 	cmd := exec.Command(potreeConverterPath, lasFilePath, "-o", outputDir)
 // 	cmd.Stdout = os.Stdout
 // 	cmd.Stderr = os.Stderr
+
+// 	// Start PotreeConverter process
+// 	if err := cmd.Start(); err != nil {
+// 			return fmt.Errorf("error starting PotreeConverter process: %v", err)
+// 	}
+
+// 	// Channel to listen for interrupt signal
+// 	done := make(chan error, 1)
+// 	go func() {
+// 			done <- cmd.Wait()
+// 	}()
+
+// 	// Handle interrupt signal to terminate the process gracefully
+// 	sig := make(chan os.Signal, 1)
+// 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+
+// 	select {
+// 	case <-sig:
+// 			// Terminate the process
+// 			err := cmd.Process.Signal(os.Interrupt)
+// 			if err != nil {
+// 					log.Printf("Error sending interrupt signal to PotreeConverter process: %v\n", err)
+// 			}
+// 			log.Println("PotreeConverter process terminated by interrupt signal.")
+// 	case err := <-done:
+// 			if err != nil {
+// 					return fmt.Errorf("error waiting for PotreeConverter process to finish: %v", err)
+// 			}
+// 			log.Println("PotreeConverter process completed successfully.")
+// 	}
+
+// 	return nil
+// }
+
+// func convertToOctree(folderPath, lasFilePath, jobId string) error {
+// 	// Invoke PotreeConverter process
+// 	potreeConverterPath := "~/pivot/PotreeConverter"
+
+// 	outputDir := filepath.Join(folderPath, jobId)
+// 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
+// 		return fmt.Errorf("failed to create output directory: %v", err)
+// 	}
+
+// 	cmd := exec.Command(potreeConverterPath, lasFilePath, "-o", outputDir)
+// 	cmd.Stdout = os.Stdout
+// 	cmd.Stderr = os.Stderr
+// 	fmt.Println(cmd)
 
 // 	err := cmd.Start()
 // 	if err != nil {
@@ -208,78 +320,78 @@ func HandleReplaceLas() http.HandlerFunc {
 // }
 
 
-// func HandleGetPoleLocations(store *sessions.CookieStore, db *sql.DB) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		vars := mux.Vars(r)
-// 		jobId := vars["id"]
+func HandleGetPoleLocations() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		jobId := vars["id"]
 
-// 		var lidarIsUploaded bool
-// 		err := db.QueryRow(`SELECT lidar_uploaded FROM jobs WHERE id = $1`, jobId).Scan(&lidarIsUploaded)
-// 		if err != nil {
-// 			http.Error(w, "Error fetching lidar uploaded status", http.StatusInternalServerError)
-// 			return
-// 		}
+		// var lidarIsUploaded bool
+		// err := db.QueryRow(`SELECT lidar_uploaded FROM jobs WHERE id = $1`, jobId).Scan(&lidarIsUploaded)
+		// if err != nil {
+		// 	http.Error(w, "Error fetching lidar uploaded status", http.StatusInternalServerError)
+		// 	return
+		// }
 
-// 		if lidarIsUploaded {
-// 			var adminId string
-// 			query := `SELECT admin_id FROM jobs WHERE id = $1`
-// 			err = db.QueryRow(query, jobId).Scan(&adminId)
-// 			if err != nil {
-// 				fmt.Println("failed to get jobs")
-// 				http.Error(w, "Error getting admin id from jobs", http.StatusInternalServerError)
-// 				return
-// 			}
+		// if lidarIsUploaded {
+			// var adminId string
+			// query := `SELECT admin_id FROM jobs WHERE id = $1`
+			// err = db.QueryRow(query, jobId).Scan(&adminId)
+			// if err != nil {
+			// 	fmt.Println("failed to get jobs")
+			// 	http.Error(w, "Error getting admin id from jobs", http.StatusInternalServerError)
+			// 	return
+			// }
 
-// 			homeDir, err := os.UserHomeDir()
-// 			if err != nil {
-// 				log.Fatalf("Error getting user's home directory: %v", err)
-// 			}
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				log.Fatalf("Error getting user's home directory: %v", err)
+			}
 
-// 			filePath := filepath.Join(homeDir, "pivot/uploads", adminId, fmt.Sprintf("%s.las", jobId))
-// 			fmt.Println(filePath)
+			filePath := filepath.Join(homeDir, "pivot/uploads", jobId, fmt.Sprintf("%s.las", jobId))
+			fmt.Println(filePath)
 
-// 			fileContent, err := ioutil.ReadFile(filePath)
-// 			if err != nil {
-// 				http.Error(w, "Error reading LAS file", http.StatusInternalServerError)
-// 				return
-// 			}
+			fileContent, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				http.Error(w, "Error reading LAS file", http.StatusInternalServerError)
+				return
+			}
 
-// 			pythonScriptPath := "/home/ja/pivot/static/scripts/get-pole-locations.py"
+			pythonScriptPath := "/home/ja/pivot/scripts/get-pole-locations.py"
 
-// 			cmd := exec.Command("python3", pythonScriptPath)
+			cmd := exec.Command("python3", pythonScriptPath)
 
-// 			cmd.Stdin = bytes.NewReader(fileContent)
+			cmd.Stdin = bytes.NewReader(fileContent)
 
-// 			var out bytes.Buffer
-// 			cmd.Stdout = &out
+			var out bytes.Buffer
+			cmd.Stdout = &out
 
-// 			err = cmd.Run()
-// 			if err != nil {
-// 				http.Error(w, "Error executing Python script: "+err.Error(), http.StatusInternalServerError)
-// 				return
-// 			}
+			err = cmd.Run()
+			if err != nil {
+				http.Error(w, "Error executing Python script: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
 
-// 			poleData := []byte(out.String())
-// 			err = savePolesToDatabase(db, jobId, poleData)
-// 			if err != nil {
-// 				http.Error(w, "Error saving pole json file to database: "+err.Error(), http.StatusInternalServerError)
-// 				return
-// 			}
+			poleData := []byte(out.String())
+			// err = savePolesToDatabase(db, jobId, poleData)
+			if err != nil {
+				http.Error(w, "Error saving pole json file to database: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
 
-// 			w.Header().Set("Content-Type", "application/json")
-// 			w.WriteHeader(http.StatusOK)
-// 			_, err = w.Write(poleData)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, err = w.Write(poleData)
 
-// 			if err != nil {
-// 				http.Error(w, "Error writing response: "+err.Error(), http.StatusInternalServerError)
-// 				return
-// 			}
-// 		} else {
-// 			http.Error(w, "Las file has not been uploaded. Upload las file to get pole locations", http.StatusForbidden)
-// 			return
-// 		}
-// 	}
-// }
+			if err != nil {
+				http.Error(w, "Error writing response: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		// } else {
+		// 	http.Error(w, "Las file has not been uploaded. Upload las file to get pole locations", http.StatusForbidden)
+		// 	return
+		// }
+	}
+}
 
 // func savePolesToDatabase(db *sql.DB, jobId string, poleData []byte) error {
 // 	query := `UPDATE jobs SET poles = $1 WHERE id = $2`

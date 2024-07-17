@@ -5,6 +5,7 @@ import Toolbar from "@/components/Toolbar";
 import MapInstance from "@/components/Map";
 import { DataTable } from "@/components/Datatable";
 import { Input } from "@/components/ui/input"
+import { PolesData } from "@/components/PolesData";
 import { UploadFile } from "@/components/Upload";
 import { Badge } from "@/components/ui/badge"
 import Link from 'next/link';
@@ -48,22 +49,45 @@ interface Row {
 }
 
 export default function page() {
-  const [page, setPage] = useState<string>('jobs')
+  const [page, setPage] = useState<string>(() => {
+    const savedPage = localStorage.getItem('currentPage');
+    console.log(savedPage)
+    return savedPage ? savedPage : 'jobs';
+  });
+  // const [page, setPage] = useState<string>('jobs')
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<Row | null>(null);
+  const [selectedRow, setSelectedRow] = useState<Row | null>(() => {
+    const savedRow = localStorage.getItem('selectedRow');
+    return savedRow ? JSON.parse(savedRow) as Row : null;
+  });
+
+  useEffect(() => {
+    if (selectedRow !== null) {
+      localStorage.setItem('selectedRow', JSON.stringify(selectedRow));
+    } else {
+      localStorage.removeItem('selectedRow');
+    }
+  }, [selectedRow]);
+
+
+  useEffect(() => {
+    localStorage.setItem('currentPage', page);
+  }, [page]);
 
   const renderComponent = () => {
+    console.log(page)
     if (page === 'folder' && selectedRow) {
       return <UploadFile id={selectedRow.original.id}/>
     } else if (page === 'folder') {
       setPage('jobs')
     } 
+
+    if (page === 'poles') {
+      return <PolesData />
+    }
     
     return <DataTable setSelectedRow={setSelectedRow} selectedRow={selectedRow}/>
   }
-  useEffect(() => {
-  console.log(selectedRow)
-  }, [selectedRow])
 
   useEffect(() => {
     const htmlElement = document.documentElement;

@@ -19,6 +19,7 @@ func main() {
 	)
 	r.Handle("/uploadLas/{id}", corsHandler(http.HandlerFunc(handle.HandleUploadLas()))).Methods("POST")
 	r.Handle("/replaceLas/{id}", corsHandler(http.HandlerFunc(handle.HandleReplaceLas()))).Methods("POST")
+	r.Handle("/getPoleLocations/{id}", corsHandler(http.HandlerFunc(handle.HandleReplaceLas()))).Methods("GET")
 
 	log.Println("Server started at http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
