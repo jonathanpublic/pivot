@@ -5,7 +5,9 @@ import (
 	// "database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"io"
+	"time"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -29,7 +31,7 @@ func HandleUploadLas() http.HandlerFunc {
 
 		r.ParseMultipartForm(40 << 20)
 
-		file, _, err := r.FormFile("file")
+		file, fileHeader, err := r.FormFile("file")
 		if err != nil {
 			fmt.Println("error recieving file from form")
 			http.Error(w, "Error recieving file from form", http.StatusInternalServerError)
@@ -44,13 +46,16 @@ func HandleUploadLas() http.HandlerFunc {
 		}
 
 		baseDir := filepath.Join(homeDir, "pivot/uploads")
-		folderPath := filepath.Join(baseDir, jobId)
-		if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
+		lasfolderPath := filepath.Join(baseDir, jobId)
+
+		if err := os.MkdirAll(lasfolderPath, os.ModePerm); err != nil {
 			http.Error(w, "Error creating uploads folder", http.StatusInternalServerError)
 			return
 		}
 
-		filePath := filepath.Join(baseDir, fmt.Sprintf("%s.las", jobId))
+		filePath := filepath.Join(lasfolderPath, fmt.Sprintf(fileHeader.Filename))
+
+		fmt.Println("filePath: ", filePath)
 
 		_, err = os.Stat(filePath)
 		if err == nil {
@@ -73,18 +78,20 @@ func HandleUploadLas() http.HandlerFunc {
 			return
 		}
 
-		err = convertToOctree(folderPath, filePath, jobId)
+		// Store metadata
+		fileSize := fileHeader.Size
+		uploadTime := time.Now()
+		err = StoreFileMetadata(fileHeader.Filename, fileSize, uploadTime, filePath)
+		if err != nil {
+			http.Error(w, "Error storing file metadata", http.StatusInternalServerError)
+			return
+		}
+
+		err = convertToOctree(lasfolderPath, filePath, strings.TrimSuffix(fileHeader.Filename, filepath.Ext(fileHeader.Filename)))
 		if err != nil {
 		 http.Error(w, err.Error(), http.StatusInternalServerError)
 		 return
 		}
-
-		// query = `UPDATE jobs SET lidar_uploaded = true WHERE id = $1`
-		// _, err = db.Exec(query, jobId)
-		// if err != nil {
-		// 	http.Error(w, "error updating job lidar_uploaded status: %v", http.StatusInternalServerError)
-		// 	return
-		// }
 
 		response := map[string]interface{}{
 			"message": "File uploaded successfully",
@@ -96,11 +103,35 @@ func HandleUploadLas() http.HandlerFunc {
 	}
 }
 
+func StoreFileMetadata(fileName string, fileSize int64, uploadTime time.Time, filePath string) error {
+	// Metadata object
+	metadata := map[string]interface{}{
+			"fileName":   fileName,
+			"fileSize":   fileSize,
+			"uploadTime": uploadTime.Format("2006-01-02 15:04:05"),
+	}
+
+	// Convert metadata to JSON
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+			return err
+	}
+
+	// Write metadata to a .metadata file alongside the uploaded file
+	metadataFilePath := filePath + ".metadata"
+	err = ioutil.WriteFile(metadataFilePath, metadataJSON, 0644)
+	if err != nil {
+			return err
+	}
+
+	return nil
+}
+
 func HandleReplaceLas() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		r.ParseMultipartForm(40 << 20)
 
-		file, _, err := r.FormFile("file")
+		file, fileHeader, err := r.FormFile("file")
 		if err != nil {
 			http.Error(w, "Error receiving file from form", http.StatusInternalServerError)
 			return
@@ -116,13 +147,15 @@ func HandleReplaceLas() http.HandlerFunc {
 		}
 
 		baseDir := filepath.Join(homeDir, "pivot/uploads")
-		folderPath := filepath.Join(baseDir, jobId)
-		if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+		lasfolderPath := filepath.Join(baseDir, jobId)
+
+		if err := os.MkdirAll(lasfolderPath, os.ModePerm); err != nil {
 			http.Error(w, "Error creating uploads folder", http.StatusInternalServerError)
 			return
 		}
 
-		filePath := filepath.Join(folderPath, fmt.Sprintf("%s.las", jobId))
+		filePath := filepath.Join(lasfolderPath, fmt.Sprintf(fileHeader.Filename))
+
 		if _, err := os.Stat(filePath); err == nil {
 			if err := os.Remove(filePath); err != nil {
 				http.Error(w, "Error deleting existing file", http.StatusInternalServerError)
@@ -144,7 +177,16 @@ func HandleReplaceLas() http.HandlerFunc {
 			return
 		}
 
-		err = convertToOctree(folderPath, filePath, jobId)
+		// Store metadata
+		fileSize := fileHeader.Size
+		uploadTime := time.Now()
+		err = StoreFileMetadata(fileHeader.Filename, fileSize, uploadTime, filePath)
+		if err != nil {
+			http.Error(w, "Error storing file metadata", http.StatusInternalServerError)
+			return
+		}
+
+		err = convertToOctree(lasfolderPath, filePath,  strings.TrimSuffix(fileHeader.Filename, filepath.Ext(fileHeader.Filename)))
 		if err != nil {
 		 http.Error(w, err.Error(), http.StatusInternalServerError)
 		 return
@@ -160,18 +202,18 @@ func HandleReplaceLas() http.HandlerFunc {
 	}
 }
 
-func convertToOctree(folderPath, lasFilePath, jobId string) error {
+func convertToOctree(folderPath, lasFilePath, name string) error {
   // Invoke PotreeConverter process
   potreeConverterPath := "/home/ja/pivot/PotreeConverter"
 
-  outputDir := filepath.Join(folderPath, jobId)
+  outputDir := filepath.Join(folderPath, name)
   cmd := exec.Command(potreeConverterPath, lasFilePath, "-o", outputDir)
   cmd.Stdout = os.Stdout
   cmd.Stderr = os.Stderr
 
   err := cmd.Start()
   if err != nil {
-    return fmt.Errorf("Error starting PotreeConverter process")
+    return fmt.Errorf("error starting PotreeConverter process")
   }
 
 
@@ -195,7 +237,7 @@ func convertToOctree(folderPath, lasFilePath, jobId string) error {
 		log.Println("PotreeConverter process terminated by interrupt signal.")
 	case err := <-done:
 		if err != nil {
-			return fmt.Errorf("Error waiting for PotreeConverter process to finish: %v", err)
+			return fmt.Errorf("error waiting for PotreeConverter process to finish: %v", err)
 		}
 		log.Println("PotreeConverter process completed successfully.")
 	}
@@ -209,6 +251,173 @@ func convertToOctree(folderPath, lasFilePath, jobId string) error {
   //return nil
 }
 
+
+type FileMetadata struct {
+	FileName   string `json:"fileName"`
+	FileSize   int64  `json:"fileSize"`
+	UploadTime string `json:"uploadTime"`
+}
+func HandleGetLasFiles() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		jobId := vars["id"]
+
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatalf("Error getting user's home directory: %v", err)
+		}
+
+		baseDir := filepath.Join(homeDir, "pivot/uploads")
+		folderPath := filepath.Join(baseDir, jobId)
+
+		if _, err := os.Stat(folderPath); os.IsNotExist(err) {
+			// Return an empty array if the directory doesn't exist
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("[]")) // Empty JSON array
+			return
+		} else if err != nil {
+			log.Printf("Error checking directory: %v", err)
+			http.Error(w, "Error checking directory", http.StatusInternalServerError)
+			return
+		}
+		files, err := os.ReadDir(folderPath)
+		if err != nil {
+			log.Printf("Error reading directory: %v", err)
+			http.Error(w, "Error reading directory", http.StatusInternalServerError)
+			return
+		}
+
+		var lasFiles []FileMetadata
+
+		for _, file := range files {
+			if !file.IsDir() && filepath.Ext(file.Name()) == ".las" {
+				filePath := filepath.Join(folderPath, file.Name())
+				metaFilePath := filePath + ".metadata"
+
+				// Read metadata file
+				metaFileBytes, err := ioutil.ReadFile(metaFilePath)
+				if err != nil {
+					log.Printf("Error reading metadata file %s: %v", metaFilePath, err)
+					continue
+				}
+
+				// Parse metadata JSON
+				var metadata FileMetadata
+				err = json.Unmarshal(metaFileBytes, &metadata)
+				if err != nil {
+					log.Printf("Error unmarshaling metadata for file %s: %v", file.Name(), err)
+					continue
+				}
+
+				// Append metadata to list
+				lasFiles = append(lasFiles, metadata)
+			}
+		}
+
+		// Encode lasFiles slice to JSON
+		responseJSON, err := json.Marshal(lasFiles)
+		if err != nil {
+			log.Printf("Error marshaling JSON: %v", err)
+			http.Error(w, "Error marshaling JSON", http.StatusInternalServerError)
+			return
+		}
+
+		// Set Content-Type header and write JSON response
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(responseJSON)
+	}
+}
+
+func HandleDeleteLas() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		jobId := vars["id"]
+		fileName := vars["fileName"]
+
+
+		homeDir, err := os.UserHomeDir()
+    if err != nil {
+        log.Fatalf("Error getting user's home directory: %v", err)
+        http.Error(w, "Error getting user's home directory", http.StatusInternalServerError)
+        return
+    }
+
+    baseDir := filepath.Join(homeDir, "pivot/uploads")
+    filePath := filepath.Join(baseDir, jobId, fileName)
+		fmt.Println(filePath)
+
+    err = os.Remove(filePath)
+    if err != nil {
+        log.Printf("Error deleting file: %v", err)
+        http.Error(w, "Error deleting file", http.StatusInternalServerError)
+        return
+    }
+
+		filePath = filepath.Join(baseDir, jobId, fileName + ".metadata") 
+    err = os.Remove(filePath)
+    if err != nil {
+        log.Printf("Error deleting file: %v", err)
+        http.Error(w, "Error deleting file", http.StatusInternalServerError)
+        return
+    }
+
+		folderPath := filepath.Join(baseDir, jobId, strings.TrimSuffix(fileName, filepath.Ext(fileName)))
+		os.RemoveAll(folderPath)
+    response := map[string]interface{}{
+        "message": "File deleted successfully",
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(response)
+	}
+}
+// func HandleGetLasFiles() http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		vars := mux.Vars(r)
+// 		jobId := vars["id"]
+
+// 		fmt.Println("HERE")
+// 		homeDir, err := os.UserHomeDir()
+// 		if err != nil {
+// 			log.Fatalf("Error getting user's home directory: %v", err)
+// 		}
+
+// 		baseDir := filepath.Join(homeDir, "pivot/uploads")
+// 		folderPath := filepath.Join(baseDir, jobId)
+
+// 		files, err := os.ReadDir(folderPath)
+// 		if err != nil {
+// 			log.Printf("Error reading directory: %v", err)
+// 			http.Error(w, "Error reading directory", http.StatusInternalServerError)
+// 			return
+// 		}
+
+// 		var lasFiles []string
+
+// 		for _, file := range files {
+// 			if !file.IsDir() && filepath.Ext(file.Name()) == ".las" {
+// 				lasFiles = append(lasFiles, file.Name())
+// 			}
+// 		}
+
+// 		// Encode lasFiles slice to JSON
+// 		responseJSON, err := json.Marshal(lasFiles)
+// 		if err != nil {
+// 			log.Printf("Error marshaling JSON: %v", err)
+// 			http.Error(w, "Error marshaling JSON", http.StatusInternalServerError)
+// 			return
+// 		}
+
+// 		// Set Content-Type header and write/filepath JSON response
+// 		w.Header().Set("Content-Type", "application/json")
+// 		w.WriteHeader(http.StatusOK)
+// 		w.Write(responseJSON)
+
+// 	}
+// }
 
 // func convertToOctree(folderPath, lasFilePath, jobId string) error {
 // 	// Get user's home directory

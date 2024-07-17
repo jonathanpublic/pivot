@@ -130,7 +130,7 @@ export const columns: ColumnDef<Job>[] = [
 //   selectedRow: string;
 // }
 
-export function DataTable({ setSelectedRow, selectedRow }: any) {
+export function DataTable({ setSelectedRow, selectedRow, setPage }: any) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
@@ -190,6 +190,11 @@ export function DataTable({ setSelectedRow, selectedRow }: any) {
 
   const handleJobSelected = (row: any) => {
     setSelectedRow(row)
+  }
+
+  const handleGoToJob = (row: any) => {
+    setSelectedRow(row)
+    setPage('folder')
   }
 
   return (
@@ -254,7 +259,8 @@ export function DataTable({ setSelectedRow, selectedRow }: any) {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  onClick={() => handleJobSelected(row)}
+                    onClick={() => handleJobSelected(row)}
+                    onDoubleClick={() => handleGoToJob(row)}
                   className={`${
                     selectedRow && selectedRow.id === row.id ? 'bg-primary text-secondary' : ''
                   } hover:bg-primary hover:text-secondary cursor-pointer transition duration-300`}
@@ -270,12 +276,15 @@ export function DataTable({ setSelectedRow, selectedRow }: any) {
                     </TableCell>
                   ))}
                     {/* <Link
+                    className='items-center'
                       key={row.id}
                       href={{
                         pathname: `/map/${row.original.id}`,
-                        query: { id: row.original.id, name: row.original.name, companyName: row.original.companyName, jobType: row.original.jobType }
+                        query: { id: row.original.id, name: row.original.jobName, companyName: row.original.companyName, jobType: row.original.jobType }
                       }}
                       passHref
+                      target="_blank"  // Open link in new tab
+                      rel="noopener noreferrer" 
                     >
                     <ChevronRight />
                     </Link> */}

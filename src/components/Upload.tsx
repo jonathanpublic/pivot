@@ -7,6 +7,25 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Terminal } from 'lucide-react';
 import { Progress } from "@/components/ui/progress"
 import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   Card,
   CardContent,
   CardDescription,
@@ -22,13 +41,30 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-interface jobId {
-  id: string | null
+import {
+  DotsHorizontalIcon,
+} from "@radix-ui/react-icons"
+
+interface JobProps {
+  id: string;
+  name: string;
+  setSelectedJob: (job: any) => void; // Adjust the type as per your requirements
+  selectedJob: any | null; // Adjust the type as per your requirements
 }
 
-export function UploadFile({id}: jobId) {
-  const [selectedFile, setSelectedFile] = useState(null);
+interface UploadedFile {
+  file: File;
+  uploadTime: string;
+  fileName: string; // Add name property
+  fileSize: number; // Add size property
+}
+
+export function UploadFile({id, name, setSelectedJob, selectedJob, setPage}: any) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFormat, setSelectedFormat] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+
+
 
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string>('')
@@ -38,6 +74,19 @@ export function UploadFile({id}: jobId) {
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState(13)
   
+  useEffect(() => {
+    const fetchFiles = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/lasFiles/${id}`);
+        const data = await response.json()
+        setUploadedFiles(data);
+      } catch (error) {
+        console.error('Error fetching files:', error);
+      }
+    };
+    fetchFiles();
+  }, []); 
+
   useEffect(() => {
     const timer = setTimeout(() => setProgress(66), 1200)
     return () => clearTimeout(timer)
@@ -75,10 +124,11 @@ export function UploadFile({id}: jobId) {
   const handleSubmit = async (event: any) => {
     event.preventDefault();
 
-
     const formData = new FormData();
     if (selectedFile) {
       formData.append('file', selectedFile);
+      formData.append('name', selectedFile.name);
+      formData.append('size', selectedFile.size.toString());
     } else {
       alert("failed to upload las")
       return;
@@ -101,6 +151,7 @@ export function UploadFile({id}: jobId) {
         }
       } else {
         resetFormFields();
+        addFileToUploadedFiles();
       }
       console.log('File uploaded successfully');
     } catch (error: any) {
@@ -108,6 +159,21 @@ export function UploadFile({id}: jobId) {
       resetFormFields();
     }
   };
+
+  const addFileToUploadedFiles = () => {
+    if (selectedFile) {
+      const currentdate = new Date();
+      const uploadtime = `${currentdate.toLocaleDateString()} ${currentdate.toLocaleTimeString()}`;
+      const uploadedfile: UploadedFile = {
+        file: selectedFile,
+        uploadTime: uploadtime,
+        fileName: selectedFile.name, 
+        fileSize: selectedFile.size,
+      };
+      setUploadedFiles(prevfiles => [...prevfiles, uploadedfile]);
+      setSelectedFile(null);
+    }
+  }
 
   const handleReplaceFile = async () => {
     setShowAlertReplaceFile(false);
@@ -129,6 +195,25 @@ export function UploadFile({id}: jobId) {
         throw new Error('Failed to replace file.');
       } else {
         resetFormFields();
+        const updatedFiles = [...uploadedFiles];
+        const fileIndex = updatedFiles.findIndex(file => file.fileName === selectedFile.name);
+
+        if (fileIndex !== -1) {
+          // Replace the existing file metadata with new metadata
+          const currentdate = new Date();
+          const uploadtime = `${currentdate.toLocaleDateString()} ${currentdate.toLocaleTimeString()}`;
+          updatedFiles[fileIndex] = {
+            file: selectedFile,
+            uploadTime: uploadtime,
+            fileName: selectedFile.name,
+            fileSize: selectedFile.size,
+          };
+
+          setUploadedFiles(updatedFiles);
+          console.log('File replaced successfully');
+        } else {
+          console.error('File to replace not found in state.');
+        }
         console.log('File replaced successfully');
       }
     } catch (error: any) {
@@ -136,8 +221,41 @@ export function UploadFile({id}: jobId) {
       resetFormFields();
     }
   };
+
+  const handleCanceleFileReplacement = () => {
+    setShowAlertReplaceFile(false)
+    resetFormFields();
+  }
+
+  const handleDeleteFile = async (fileToDelete: UploadedFile) => {
+    try {
+      // Delete file from server
+      const updatedFiles = uploadedFiles.filter(file => file.fileName !== fileToDelete.fileName);
+      setUploadedFiles(updatedFiles);
+
+      const response = await fetch(`http://localhost:8080/deleteFile/${id}/${fileToDelete.fileName}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete file from server.');
+      }
+
+      console.log('File deleted successfully');
+    } catch (error: any) {
+      console.error('Error deleting file:', error.message);
+    }
+  };
+
+  const bytesToGB = (bytes: number): number => {
+    if (bytes === 0) return 0;
+  
+    const GB = 1 << 30; // 2^30 bytes = 1 GB
+    return bytes / GB;
+  };
+  
 	return (
-    <div className="flex justify-center h-full mt-4">
+    <div className="flex justify-center h-full">
 
       { showProgress ? (
         <>
@@ -145,9 +263,46 @@ export function UploadFile({id}: jobId) {
           <Progress value={progress} className="w-[60%]" />
         </>
       ) : (
-        <div className='flex flex-col gap-10'>
+        <div className='flex flex-col items-center w-full gap-10'>
           {!showAlertReplaceFile && (
-            <Card className="w-[350px]">
+            <>
+            <Table className="mt-4">
+              <TableCaption>A list of your files for {name}.</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="">Name</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead>Timestamp</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {uploadedFiles && uploadedFiles.map((file, index) => (
+                  <TableRow key={index} onClick={() => setSelectedJob(file)} onDoubleClick={() => setPage('poles')}
+                    className={`hover:bg-primary hover:text-secondary cursor-pointer ${selectedJob === file ? 'bg-primary text-secondary' : ''}`}>
+                    <TableCell className="font-medium">{file.fileName}</TableCell>
+                    <TableCell>{bytesToGB(file.fileSize).toFixed(2)} GB</TableCell>
+                    <TableCell>{file.uploadTime}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <DotsHorizontalIcon className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel className="border-b">Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleDeleteFile(file)} className="cursor-pointer">Delete</DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer">More</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                  </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <Card className="mt-20 w-[350px]">
               <CardHeader>
                 <CardTitle>Upload File</CardTitle>
                 <CardDescription>Start your project with one click.</CardDescription>
@@ -189,6 +344,7 @@ export function UploadFile({id}: jobId) {
                 </CardFooter>
               </form>
             </Card>
+            </>
           )}
           {showAlert && (
             <Alert className='w-[350px]'>
@@ -208,7 +364,7 @@ export function UploadFile({id}: jobId) {
                 {alertMessage}
               </AlertDescription>
               <div className='flex justify-between mt-4'>
-                <Button variant="outline" className='hover:bg-primary hover:text-secondary' onClick={() => setShowAlertReplaceFile(false)}>No</Button>
+                <Button variant="outline" className='hover:bg-primary hover:text-secondary' onClick={handleCanceleFileReplacement}>No</Button>
                 <Button className='hover:bg-secondary hover:text-primary hover:border-black border border-black' onClick={handleReplaceFile} >Yes</Button>
               </div>
             </Alert>
